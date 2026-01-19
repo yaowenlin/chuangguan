@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>二年级数学闯关小游戏 - 小马速算</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", 幼圆, sans-serif;
+        }
+        body {
+            background-color: #f9f5e8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .game-container {
+            max-width: 1280px;
+            max-height: 720px;
+            width: 100%;
+            height: 95vh;
+            background-color: #fff;
+            border-radius: 20px;
+            box-shadow: 0 0 30px rgba(180, 210, 255, 0.6);
+            display: flex;
+            position: relative;
+        }
+        .question-area {
+            flex: 10;
+            height: 100%;
+            background-color: #e6f3ff;
+            padding: 20px 30px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .keyboard-area {
+            flex: 6;
+            height: 100%;
+            background-color: #fff9e8;
+            padding: 20px 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+        }
+        .level-title {
+            text-align: center;
+            font-size: 36px;
+            color: #2a78e4;
+            margin-bottom: 25px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        .title-icon {
+            font-size: 42px;
+        }
+        /* ★核心优化：题目排版 彻底解决第二关换行问题 */
+        .question-box {
+            margin-bottom: 25px;
+            font-size: 28px;
+            color: #333;
+            line-height: 1.8;
+            display: block;
+        }
+        /* 填空框样式-核心交互组件 */
+        .answer-input {
+            width: 70px;
+            height: 45px;
+            border: 3px solid #b4d2ff;
+            border-radius: 10px;
+            font-size: 26px;
+            text-align: center;
+            margin: 0 5px;
+            outline: none;
+            color: #2a78e4;
+            font-weight: bold;
+            caret-color: #2a78e4;
+            white-space: nowrap;
+            overflow: hidden;
+            vertical-align: middle;
+        }
+        .answer-input.active {
+            border-color: #ff9d4d;
+            background-color: #fff3e8;
+            box-shadow: 0 0 10px rgba(255, 157, 77, 0.6);
+        }
+        /* 应用题专用样式，完美适配长文本，无多余换行 */
+        .long-question {
+            font-size: 26px;
+            line-height: 2;
+            text-align: justify;
+        }
+        .num-keyboard {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            width: 100%;
+            flex: 1;
+        }
+        .num-btn {
+            width: 100%;
+            height: 60px;
+            border-radius: 15px;
+            border: none;
+            background-color: #d1e7ff;
+            color: #2a78e4;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .num-btn:hover {
+            background-color: #b4d2ff;
+            transform: scale(1.05);
+        }
+        .func-keyboard {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            width: 100%;
+        }
+        .func-btn {
+            height: 55px;
+            border-radius: 12px;
+            border: none;
+            color: #fff;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .func-btn:hover {
+            transform: scale(1.03);
+        }
+        .switch-btn { background-color: #4da6ff; }
+        .del-btn { background-color: #ff9d4d; }
+        .submit-btn {
+            background-color: #54c763;
+            grid-column: span 2;
+        }
+        .submit-btn:disabled {
+            background-color: #c0c0c0;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .result-page {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+        }
+        .result-title {
+            font-size: 42px;
+            color: #2a78e4;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .result-item {
+            font-size: 32px;
+            color: #333;
+            margin-bottom: 25px;
+            text-align: center;
+            line-height: 1.8;
+        }
+        .success { color: #54c763; font-weight: bold; }
+        .fail { color: #ff6b6b; font-weight: bold; }
+        .restart-btn {
+            margin-top: 30px;
+            width: 260px;
+            height: 70px;
+            background-color: #2a78e4;
+            color: #fff;
+            border: none;
+            border-radius: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .restart-btn:hover {
+            background-color: #1a62cc;
+            transform: scale(1.05);
+        }
+        .pony-decoration {
+            position: absolute;
+            font-size: 50px;
+            opacity: 0.2;
+            z-index: 1;
+        }
+        .pony1 { top: 15px; right: 20px; }
+        .pony2 { bottom: 15px; left: 20px; }
+        .page {
+            width: 100%;
+            height: 100%;
+            display: none;
+        }
+        .page.show {
+            display: flex;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="page level1-page show" id="level1">
+            <div class="question-area">
+                <div class="level-title">
+                    <span class="title-icon">🐎</span>小马速算<span class="title-icon">🐎</span>
+                </div>
+                <div class="question-box">① 45 ÷ 9 = <input type="text" class="answer-input" maxlength="2" data-ans="5"></div>
+                <div class="question-box">② 7 × 4 = <input type="text" class="answer-input" maxlength="2" data-ans="28"></div>
+                <div class="question-box">③ 70 - 49 = <input type="text" class="answer-input" maxlength="2" data-ans="21"></div>
+                <div class="question-box">④ 16 ÷ 8 × 7 = <input type="text" class="answer-input" maxlength="2" data-ans="14"></div>
+                <div class="pony-decoration pony1">🦄</div>
+            </div>
+            <div class="keyboard-area">
+                <div class="num-keyboard">
+                    <button class="num-btn">1</button><button class="num-btn">2</button><button class="num-btn">3</button>
+                    <button class="num-btn">4</button><button class="num-btn">5</button><button class="num-btn">6</button>
+                    <button class="num-btn">7</button><button class="num-btn">8</button><button class="num-btn">9</button>
+                    <button class="num-btn" style="grid-column: 2;">0</button>
+                </div>
+                <div class="func-keyboard">
+                    <button class="func-btn switch-btn" id="prevInput">⬅ 上一空</button>
+                    <button class="func-btn switch-btn" id="nextInput">下一空 ➡</button>
+                    <button class="func-btn del-btn" id="delBtn">🗑️ 删除</button>
+                    <button class="func-btn submit-btn" id="submit1">确认提交</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="page level2-page" id="level2">
+            <div class="question-area">
+                <div class="level-title">
+                    <span class="title-icon">🐎</span>小马探数<span class="title-icon">🐎</span>
+                </div>
+                <div class="question-box long-question">① 一盒积木8元，50元可以买 <input type="text" class="answer-input" maxlength="2" data-ans="6"> 盒积木，还剩 <input type="text" class="answer-input" maxlength="2" data-ans="2"> 元。</div>
+                <div class="question-box long-question" style="margin-top: 20px;">② 学校鼓号队原来有48名队员，本学期又招收了16名新队员。现在一共有 <input type="text" class="answer-input" maxlength="2" data-ans="64"> 名队员。表演时，队员们站的排数和每排人数同样多，每排有 <input type="text" class="answer-input" maxlength="2" data-ans="8"> 人。</div>
+                <div class="pony-decoration pony2">🦄</div>
+            </div>
+            <div class="keyboard-area">
+                <div class="num-keyboard">
+                    <button class="num-btn">1</button><button class="num-btn">2</button><button class="num-btn">3</button>
+                    <button class="num-btn">4</button><button class="num-btn">5</button><button class="num-btn">6</button>
+                    <button class="num-btn">7</button><button class="num-btn">8</button><button class="num-btn">9</button>
+                    <button class="num-btn" style="grid-column: 2;">0</button>
+                </div>
+                <div class="func-keyboard">
+                    <button class="func-btn switch-btn" id="prevInput2">⬅ 上一空</button>
+                    <button class="func-btn switch-btn" id="nextInput2">下一空 ➡</button>
+                    <button class="func-btn del-btn" id="delBtn2">🗑️ 删除</button>
+                    <button class="func-btn submit-btn" id="submit2">确认提交</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="page result-page" id="result">
+            <div class="result-title"><span>🏆</span>闯关结果统计<span>🏆</span></div>
+            <div class="result-item" id="result1">第一关：答对 <span id="level1-correct">0</span> 题/共4题，<span id="res1-status" class="fail">闯关失败</span></div>
+            <div class="result-item" id="result2">第二关：答对 <span id="level2-correct">0</span> 题/共4题，<span id="res2-status" class="fail">闯关失败</span></div>
+            <button class="restart-btn" id="restartBtn">重新开始闯关</button>
+            <div class="pony-decoration pony1" style="top: 50px; right: 100px;">🐎</div>
+            <div class="pony-decoration pony2" style="bottom: 50px; left: 100px;">🐎</div>
+        </div>
+    </div>
+
+    <script>
+        let currentLevel = 1;
+        let currentInputIndex = 0;
+        let level1Correct = 0;
+        let level2Correct = 0;
+        // 获取所有输入框+页面节点+按钮节点+结果节点，全局复用，避免重复获取
+        const allInputs1 = document.querySelectorAll('#level1 .answer-input');
+        const allInputs2 = document.querySelectorAll('#level2 .answer-input');
+        const level1Page = document.getElementById('level1');
+        const level2Page = document.getElementById('level2');
+        const resultPage = document.getElementById('result');
+        const submit1 = document.getElementById('submit1');
+        const submit2 = document.getElementById('submit2');
+        // 结果页专用节点，单独获取，避免每次查找
+        const level1CorrectDom = document.getElementById('level1-correct');
+        const level2CorrectDom = document.getElementById('level2-correct');
+        const res1Status = document.getElementById('res1-status');
+        const res2Status = document.getElementById('res2-status');
+
+        // 初始化第一关
+        initInput(allInputs1);
+
+        // 通用初始化填空框方法
+        function initInput(inputs) {
+            if(inputs.length > 0) {
+                inputs.forEach(i => i.classList.remove('active'));
+                inputs[0].classList.add('active');
+                inputs.forEach((input, idx) => {
+                    input.addEventListener('click', () => {
+                        inputs.forEach(i => i.classList.remove('active'));
+                        input.classList.add('active');
+                        currentInputIndex = idx;
+                    });
+                });
+            }
+        }
+
+        // 精准匹配当前关卡输入框，数字输入正常
+        document.querySelectorAll('.num-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                let activeInput = null;
+                if(currentLevel === 1) {
+                    activeInput = document.querySelector('#level1 .answer-input.active');
+                } else if(currentLevel === 2) {
+                    activeInput = document.querySelector('#level2 .answer-input.active');
+                }
+                if(activeInput) {
+                    activeInput.value = (activeInput.value + btn.textContent).slice(0, 2);
+                    activeInput.focus();
+                }
+            });
+        });
+
+        // ========== 第一关 核心逻辑 ==========
+        document.getElementById('prevInput').addEventListener('click', () => switchInput(allInputs1, 'prev'));
+        document.getElementById('nextInput').addEventListener('click', () => switchInput(allInputs1, 'next'));
+        document.getElementById('delBtn').addEventListener('click', () => {
+            const activeInput = document.querySelector('#level1 .answer-input.active');
+            if(activeInput) activeInput.value = '';
+        });
+        submit1.addEventListener('click', function() {
+            this.disabled = true;
+            level1Correct = countCorrect(allInputs1);
+            setTimeout(() => {
+                level1Page.classList.remove('show');
+                level2Page.classList.add('show');
+                resultPage.classList.remove('show');
+                currentLevel = 2;
+                currentInputIndex = 0;
+                initInput(allInputs2);
+            }, 300);
+        });
+
+        // ========== 第二关 核心逻辑 ==========
+        document.getElementById('prevInput2').addEventListener('click', () => switchInput(allInputs2, 'prev'));
+        document.getElementById('nextInput2').addEventListener('click', () => switchInput(allInputs2, 'next'));
+        document.getElementById('delBtn2').addEventListener('click', () => {
+            const activeInput = document.querySelector('#level2 .answer-input.active');
+            if(activeInput) activeInput.value = '';
+        });
+        submit2.addEventListener('click', function() {
+            this.disabled = true;
+            level2Correct = countCorrect(allInputs2);
+            setTimeout(() => {
+                level1Page.classList.remove('show');
+                level2Page.classList.remove('show');
+                resultPage.classList.add('show');
+                showResult(); // ✅ 延迟后渲染最新结果，必刷新
+            }, 300);
+        });
+
+        // ========== 统计页 重新开始 核心逻辑【重中之重，彻底重置所有状态+数据清零】 ==========
+        document.getElementById('restartBtn').addEventListener('click', () => {
+            // 1. 重置所有全局变量，数据彻底清零，干干净净无残留
+            currentLevel = 1;
+            currentInputIndex = 0;
+            level1Correct = 0;
+            level2Correct = 0;
+            // 2. 重置所有输入框：清空内容+移除激活状态，恢复初始样式
+            allInputs1.forEach(i => {i.value = ''; i.classList.remove('active')});
+            allInputs2.forEach(i => {i.value = ''; i.classList.remove('active')});
+            // 3. 核心修复：解除两个提交按钮的禁用状态，必写！
+            submit1.disabled = false;
+            submit2.disabled = false;
+            // 4. 排他性切换页面，回到初始状态，永远只有一个页面显示
+            level1Page.classList.add('show');
+            level2Page.classList.remove('show');
+            resultPage.classList.remove('show');
+            // 5. 重新初始化第一关输入框激活状态
+            initInput(allInputs1);
+            // 6. 兜底：重置结果页默认显示，防止数据残留
+            resetResultDefault();
+        });
+
+        // ========== 通用工具方法 ==========
+        function switchInput(inputs, type) {
+            inputs[currentInputIndex].classList.remove('active');
+            if(type === 'prev') {
+                currentInputIndex = currentInputIndex === 0 ? inputs.length -1 : currentInputIndex -1;
+            } else {
+                currentInputIndex = currentInputIndex === inputs.length -1 ? 0 : currentInputIndex +1;
+            }
+            inputs[currentInputIndex].classList.add('active');
+            inputs[currentInputIndex].focus();
+        }
+
+        function countCorrect(inputs) {
+            let correct = 0;
+            inputs.forEach(input => {
+                if(input.value.trim() === input.dataset.ans) correct++;
+            });
+            return correct;
+        }
+
+        // ✅ 核心修复：重构showResult方法，【只修改文本内容，不破坏DOM结构】，永久解决不刷新问题
+        function showResult() {
+            // 只修改数值，不改动任何标签结构
+            level1CorrectDom.textContent = level1Correct;
+            level2CorrectDom.textContent = level2Correct;
+            
+            // 只修改状态文本和样式类，不拼接HTML，DOM永远完好
+            if(level1Correct === 4){
+                res1Status.className = 'success';
+                res1Status.textContent = '闯关成功';
+            }else{
+                res1Status.className = 'fail';
+                res1Status.textContent = '闯关失败';
+            }
+
+            if(level2Correct >= 3){
+                res2Status.className = 'success';
+                res2Status.textContent = '闯关成功';
+            }else{
+                res2Status.className = 'fail';
+                res2Status.textContent = '闯关失败';
+            }
+        }
+
+        // ✅ 新增：重置结果页默认状态，兜底防残留
+        function resetResultDefault() {
+            level1CorrectDom.textContent = 0;
+            level2CorrectDom.textContent = 0;
+            res1Status.className = 'fail';
+            res1Status.textContent = '闯关失败';
+            res2Status.className = 'fail';
+            res2Status.textContent = '闯关失败';
+        }
+    </script>
+</body>
+</html>
